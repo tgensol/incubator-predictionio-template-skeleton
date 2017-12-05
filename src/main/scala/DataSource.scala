@@ -3,7 +3,6 @@ package org.template.classification
 import org.apache.predictionio.controller.PDataSource
 import org.apache.predictionio.controller.EmptyEvaluationInfo
 import org.apache.predictionio.controller.EmptyActualResult
-import org.apache.predictionio.controller.ActualResult
 import org.apache.predictionio.controller.Params
 import org.apache.predictionio.data.storage.Event
 import org.apache.predictionio.data.store.PEventStore
@@ -55,49 +54,49 @@ class DataSource(val dsp: DataSourceParams)
     
     new TrainingData(labeledPoints)
   }
-  override
-  def readEval(sc: SparkContext)
-  : Seq[(TrainingData, EmptyEvaluationInfo, RDD[(Query, ActualResult)])] = {
-    val eventsRDD: RDD[Event] = PEventStore.find(
-      appName = dsp.appName,
-      entityType = Some("choose"),
-      eventNames = Some(List("contact"))
-    )(sc).cache()
+  // override
+  // def readEval(sc: SparkContext)
+  // : Seq[(TrainingData, EmptyEvaluationInfo, RDD[(Query, ActualResult)])] = {
+  //   val eventsRDD: RDD[Event] = PEventStore.find(
+  //     appName = dsp.appName,
+  //     entityType = Some("choose"),
+  //     eventNames = Some(List("contact"))
+  //   )(sc).cache()
 
-    val labeledPoints: RDD[TextClass] = eventsRDD
-      .filter {event => event.event == "contact"}
-      .map { event =>
+  //   val labeledPoints: RDD[TextClass] = eventsRDD
+  //     .filter {event => event.event == "contact"}
+  //     .map { event =>
 
-      try {
-        TextClass(
-          text_type = event.entityId,
-          text = event.properties.get[String]("text"),
-          replyTo = event.properties.getOpt[String]("replyTo"),
-          gender = event.properties.getOpt[Number]("gender"),
-          bdate = event.properties.getOpt[Number]("bdate"),
-          lang = event.properties.getOpt[String]("lang"),
-          platform = event.properties.getOpt[String]("platform")
-        ) 
-      } catch {
-        case e: Exception =>
-          logger.error(s"Cannot convert ${event} to TextClass." +
-            s" Exception: ${e}.")
-          throw e
-      }
-    }.cache()
+  //     try {
+  //       TextClass(
+  //         text_type = event.entityId,
+  //         text = event.properties.get[String]("text"),
+  //         replyTo = event.properties.getOpt[String]("replyTo"),
+  //         gender = event.properties.getOpt[Number]("gender"),
+  //         bdate = event.properties.getOpt[Number]("bdate"),
+  //         lang = event.properties.getOpt[String]("lang"),
+  //         platform = event.properties.getOpt[String]("platform")
+  //       ) 
+  //     } catch {
+  //       case e: Exception =>
+  //         logger.error(s"Cannot convert ${event} to TextClass." +
+  //           s" Exception: ${e}.")
+  //         throw e
+  //     }
+  //   }.cache()
     
-    (0 until 1).map { idx =>
-      val random = idx
-      (
-        new TrainingData(labeledPoints),
-        new EmptyEvaluationInfo(),
-        labeledPoints.map {
-          p => (new Query(p.text, p.replyTo, p.gender, p.bdate, p.lang, p.platform), 
-            new ActualResult(p.text_type))
-        }
-      )
-    }
-  }
+  //   (0 until 1).map { idx =>
+  //     val random = idx
+  //     (
+  //       new TrainingData(labeledPoints),
+  //       new EmptyEvaluationInfo(),
+  //       labeledPoints.map {
+  //         p => (new Query(p.text, p.replyTo, p.gender, p.bdate, p.lang, p.platform), 
+  //           new ActualResult(p.text_type))
+  //       }
+  //     )
+  //   }
+  // }
 }
 
 

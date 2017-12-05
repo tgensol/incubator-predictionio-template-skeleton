@@ -13,31 +13,105 @@ import org.apache.spark.rdd.RDD
 import grizzled.slf4j.Logger
 
 case class DataSourceParams(appName: String) extends Params
-
 class DataSource(val dsp: DataSourceParams)
   extends PDataSource[TrainingData,
-      EmptyEvaluationInfo, Query, EmptyActualResult] {
+      EmptyEvaluationInfo, Query, ActualResult] {
 
   @transient lazy val logger = Logger[this.type]
 
   override
   def readTraining(sc: SparkContext): TrainingData = {
-
-    // read all events of EVENT involving ENTITY_TYPE and TARGET_ENTITY_TYPE
+  
     val eventsRDD: RDD[Event] = PEventStore.find(
       appName = dsp.appName,
-      entityType = Some("ENTITY_TYPE"),
-      eventNames = Some(List("EVENT")),
-      targetEntityType = Some(Some("TARGET_ENTITY_TYPE")))(sc)
+      entityType = Some("choose"),
+      eventNames = Some(List("contact"))
+    )(sc).cache()
 
-    new TrainingData(eventsRDD)
+    val labeledPoints: RDD[TextClass] = eventsRDD
+      .filter {event => event.event == "contact"}
+      .map { event =>
+
+      try {
+        TextClass(
+          text_type = event.entityId,
+          text = event.properties.get[String]("text"),
+          replyTo = event.properties.getOpt[String]("replyTo"),
+          gender = event.properties.getOpt[Number]("gender"),
+          bdate = event.properties.getOpt[Number]("bdate"),
+          lang = event.properties.getOpt[String]("lang"),
+          platform = event.properties.getOpt[String]("platform")
+        ) 
+      } catch {
+        case e: Exception =>
+          logger.error(s"Cannot convert ${event} to TextClass." +
+            s" Exception: ${e}.")
+          throw e
+      }
+    }
+    
+    new TrainingData(labeledPoints)
+  }
+  override
+  def readEval(sc: SparkContext)
+  : Seq[(TrainingData, EmptyEvaluationInfo, RDD[(Query, ActualResult)])] = {
+    val eventsRDD: RDD[Event] = PEventStore.find(
+      appName = dsp.appName,
+      entityType = Some("choose"),
+      eventNames = Some(List("contact"))
+    )(sc).cache()
+
+    val labeledPoints: RDD[TextClass] = eventsRDD
+      .filter {event => event.event == "contact"}
+      .map { event =>
+
+      try {
+        TextClass(
+          text_type = event.entityId,
+          text = event.properties.get[String]("text"),
+          replyTo = event.properties.getOpt[String]("replyTo"),
+          gender = event.properties.getOpt[Number]("gender"),
+          bdate = event.properties.getOpt[Number]("bdate"),
+          lang = event.properties.getOpt[String]("lang"),
+          platform = event.properties.getOpt[String]("platform")
+        ) 
+      } catch {
+        case e: Exception =>
+          logger.error(s"Cannot convert ${event} to TextClass." +
+            s" Exception: ${e}.")
+          throw e
+      }
+    }.cache()
+    
+    (0 until 1).map { idx =>
+      val random = idx
+      (
+        new TrainingData(labeledPoints),
+        new EmptyEvaluationInfo(),
+        labeledPoints.map {
+          p => (new Query(p.text, p.replyTo, p.gender, p.bdate, p.lang, p.platform), 
+            new ActualResult(p.text_type))
+        }
+      )
+    }
   }
 }
 
+
+case class TextClass(
+  val text_type: String,
+  val text: String,
+  val replyTo: Option[String],
+  val gender: Option[Number],
+  val bdate: Option[Number],
+  val lang: Option[String],
+  val platform: Option[String]
+)
+
 class TrainingData(
-  val events: RDD[Event]
+  val texts: RDD[TextClass]
 ) extends Serializable {
   override def toString = {
-    s"events: [${events.count()}] (${events.take(2).toList}...)"
+    s"queries: [${texts.count()}] (${texts.take(1).toList}...)"
   }
 }

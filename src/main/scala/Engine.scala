@@ -1,4 +1,4 @@
-package org.example.vanilla
+package org.template.classification
 
 import org.apache.predictionio.controller.EngineFactory
 import org.apache.predictionio.controller.Engine

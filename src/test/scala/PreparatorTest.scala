@@ -1,4 +1,4 @@
-package org.example.vanilla
+package org.template.classification
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers

@@ -1,4 +1,4 @@
-package org.example.vanilla
+package org.template.classification
 
 import org.apache.predictionio.controller.PPreparator
 import org.apache.predictionio.data.storage.Event

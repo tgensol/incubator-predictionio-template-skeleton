@@ -1,18 +1,16 @@
 {
-  "id": "default",
-  "description": "Default settings",
-  "engineFactory": "org.example.vanilla.VanillaEngine",
-  "datasource": {
-    "params" : {
-      "appName": "INVALID_APP_NAME"
-    }
-  },
-  "algorithms": [
-    {
-      "name": "algo",
-      "params": {
-        "mult" : 1
-      }
-    }
-  ]
+    "id": "default",
+    "description": "Default settings",
+    "engineFactory": "org.template.classification.ClassificationEngine",
+    "datasource": {
+        "params": {
+            "appName": "CoreNLP"
+        }
+    },
+    "algorithms": [{
+        "name": "als",
+        "params": {
+            "lambda": 0.01
+        }
+    }]
 }

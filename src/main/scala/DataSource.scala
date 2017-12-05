@@ -3,6 +3,7 @@ package org.template.classification
 import org.apache.predictionio.controller.PDataSource
 import org.apache.predictionio.controller.EmptyEvaluationInfo
 import org.apache.predictionio.controller.EmptyActualResult
+import org.apache.predictionio.controller.ActualResult
 import org.apache.predictionio.controller.Params
 import org.apache.predictionio.data.storage.Event
 import org.apache.predictionio.data.store.PEventStore
@@ -56,7 +57,7 @@ class DataSource(val dsp: DataSourceParams)
   }
   override
   def readEval(sc: SparkContext)
-  : Seq[(TrainingData, EmptyEvaluationInfo, RDD[(Query, EmptyActualResult)])] = {
+  : Seq[(TrainingData, EmptyEvaluationInfo, RDD[(Query, ActualResult)])] = {
     val eventsRDD: RDD[Event] = PEventStore.find(
       appName = dsp.appName,
       entityType = Some("choose"),
@@ -92,7 +93,7 @@ class DataSource(val dsp: DataSourceParams)
         new EmptyEvaluationInfo(),
         labeledPoints.map {
           p => (new Query(p.text, p.replyTo, p.gender, p.bdate, p.lang, p.platform), 
-            new EmptyActualResult(p.text_type))
+            new ActualResult(p.text_type))
         }
       )
     }
